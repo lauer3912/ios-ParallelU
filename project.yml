@@ -23,6 +23,9 @@ targets:
       - path: ParallelU
         excludes:
           - "**/.DS_Store"
+      - path: Shared
+        excludes:
+          - "**/.DS_Store"
     settings:
       base:
         INFOPLIST_FILE: ParallelU/Info.plist
@@ -51,6 +54,9 @@ targets:
     platform: iOS
     sources:
       - path: ParallelUWidget
+        excludes:
+          - "**/.DS_Store"
+      - path: Shared
         excludes:
           - "**/.DS_Store"
     settings:
