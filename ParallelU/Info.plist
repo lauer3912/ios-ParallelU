@@ -44,5 +44,7 @@
         <string>UIInterfaceOrientationLandscapeLeft</string>
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>ParallelU needs to send you notifications for time capsule unlock reminders, daily parallel universe quotes, and new parallel self creation reminders.</string>
 </dict>
 </plist>

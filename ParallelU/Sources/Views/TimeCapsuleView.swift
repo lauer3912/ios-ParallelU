@@ -359,6 +359,12 @@ struct CapsuleCreatorView: View {
                             unlockDate: Date().addingTimeInterval(Double(unlockDays) * 86400),
                             privacy: privacy
                         )
+                        // Schedule notifications
+                        NotificationService.shared.scheduleCapsuleUnlockReminder(for: capsule)
+                        NotificationService.shared.scheduleCapsuleUpcomingReminder(for: capsule, daysBeforeUnlock: 1)
+                        if capsule.unlockDate > Date().addingTimeInterval(86400 * 7) {
+                            NotificationService.shared.scheduleCapsuleUpcomingReminder(for: capsule, daysBeforeUnlock: 7)
+                        }
                         onCreate(capsule)
                         dismiss()
                     }
