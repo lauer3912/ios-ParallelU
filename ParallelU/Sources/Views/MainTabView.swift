@@ -11,24 +11,28 @@ struct MainTabView: View {
                     Label("Home", systemImage: "house.fill")
                 }
                 .tag(0)
+                .accessibilityIdentifier("tab_home")
             
             ExploreView()
                 .tabItem {
                     Label("Explore", systemImage: "safari.fill")
                 }
                 .tag(1)
+                .accessibilityIdentifier("tab_explore")
             
             TimeCapsuleView()
                 .tabItem {
                     Label("Capsules", systemImage: "clock.fill")
                 }
                 .tag(2)
+                .accessibilityIdentifier("tab_capsules")
             
             ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person.fill")
                 }
                 .tag(3)
+                .accessibilityIdentifier("tab_profile")
         }
         .tint(Color(hex: "9B8FE8"))
         .onAppear {
