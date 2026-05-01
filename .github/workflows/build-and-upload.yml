@@ -51,6 +51,7 @@ jobs:
             DEVELOPMENT_TEAM=${{ env.DEV_TEAM }} \
             CODE_SIGN_STYLE=Automatic \
             CODE_SIGNING_ALLOWED=YES \
+            -allowProvisioningUpdates \
             archive \
             -archivePath ./ParallelU.xcarchive
         working-directory: ${{ github.workspace }}
