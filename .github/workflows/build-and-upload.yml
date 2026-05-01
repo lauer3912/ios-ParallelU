@@ -27,9 +27,12 @@ jobs:
 
       - name: Setup XcodeGen
         run: |
-          mkdir -p ~/tools
-          curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.45.4/xcodegen.zip -o xcodegen.zip && unzip -o xcodegen.zip -d ~/tools && rm xcodegen.zip && chmod +x ~/tools/xcodegen/xcodegen
-          echo "~/tools" >> $GITHUB_PATH
+          mkdir -p ~/tools/xcodegen/bin
+          curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.45.4/xcodegen.zip -o /tmp/xcodegen.zip
+          unzip -o /tmp/xcodegen.zip -d ~/tools/xcodegen
+          rm /tmp/xcodegen.zip
+          chmod +x ~/tools/xcodegen/bin/xcodegen
+          echo "~/tools/xcodegen/bin" >> $GITHUB_PATH
         working-directory: /tmp
 
       - name: Verify XcodeGen
