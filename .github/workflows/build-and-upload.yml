@@ -1,0 +1,91 @@
+name: Build & Upload to App Store
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      deploy_type:
+        description: 'Deploy type'
+        required: true
+        default: 'testflight'
+        type: choice
+        options:
+          - testflight
+          - appstore
+
+env:
+  DEV_TEAM: 9L6N2ZF26B
+  ASC_USER: support@techidaily.com
+  PLATFORM: ios
+
+jobs:
+  build-and-upload:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      # -------- Checkout --------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # -------- Ruby (for XcodeGen) --------
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      # -------- XcodeGen --------
+      - name: Setup XcodeGen
+        run: |
+          mkdir -p ~/tools
+          curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.45.0/XcodeGen-2.45.0-macOS-arm64.tar.gz | tar -xz -C ~/tools
+          echo "~/tools" >> $GITHUB_PATH
+        working-directory: /tmp
+
+      - name: Verify XcodeGen
+        run: xcodegen --version
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+        working-directory: ${{ github.workspace }}
+
+      # -------- Build --------
+      - name: Build (Release)
+        run: |
+          xcodebuild -project ParallelU.xcodeproj \
+            -scheme ParallelU \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            DEVELOPMENT_TEAM=${{ env.DEV_TEAM }} \
+            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGNING_ALLOWED=YES \
+            archive \
+            -archivePath ./ParallelU.xcarchive
+        working-directory: ${{ github.workspace }}
+
+      # -------- Upload --------
+      - name: Upload to App Store Connect
+        env:
+          ASC_PASS: ${{ secrets.ASC_APP_PASSWORD }}
+        run: |
+          echo "=== Uploading to App Store Connect ==="
+          xcrun altool --upload-app \
+            -f ./ParallelU.xcarchive \
+            -t ${{ env.PLATFORM }} \
+            -u ${{ env.ASC_USER }} \
+            -p "$ASC_PASS" \
+            --provider ${{ env.DEV_TEAM }} \
+            --bundle-id com.ggsheng.ParallelU \
+            --apple-id 6762428992
+        working-directory: ${{ github.workspace }}
+
+      # -------- Success notification --------
+      - name: Build summary
+        run: |
+          echo "## ✅ Build & Upload Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- App: ParallelU" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Next step: Log in to App Store Connect to add TestFlight testers and submit for review." >> $GITHUB_STEP_SUMMARY
