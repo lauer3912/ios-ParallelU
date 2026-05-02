@@ -9,7 +9,6 @@ env:
   DEV_TEAM: 9L6N2ZF26B
   ASC_USER: support@techidaily.com
   PLATFORM: ios
-  XCODEGEN_PATH: /Users/runner/tools/XcodeGen.app/Contents/MacOS
 
 jobs:
   build-and-upload:
@@ -52,18 +51,23 @@ jobs:
         run: |
           mkdir -p ~/tools
           curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.45.0/XcodeGen-2.45.0-macOS-arm64.tar.gz | tar -xz -C ~/tools
-          echo "$XCODEGEN_PATH" >> $GITHUB_PATH
+          ls -la ~/tools/
+          ls -la ~/tools/XcodeGen.app/Contents/MacOS/
         working-directory: /tmp
 
       - name: Verify XcodeGen
         run: |
-          echo "PATH: $PATH"
-          ls -la ~/tools/
-          ls -la ~/tools/XcodeGen.app/Contents/MacOS/ 2>/dev/null || echo "Path not found"
-          xcodegen --version
+          echo "Adding XcodeGen to PATH"
+          echo "$HOME/tools" >> $GITHUB_PATH
+          export PATH="$PATH:$HOME/tools"
+          xcodegen version
 
+      # -------- Generate Project --------
       - name: Generate Xcode project
-        run: xcodegen generate
+        run: |
+          export PATH="$PATH:$HOME/tools"
+          xcodegen generate
+          ls -la
         working-directory: ${{ github.workspace }}/ParallelU
 
       # -------- Build --------
