@@ -46,7 +46,7 @@ jobs:
           chmod +x ~/tools/xcodegen
 
       - name: Generate Xcode project
-        run: ~/tools/xcodegen generate
+        run: ~/tools/xcodegen/bin/xcodegen generate
         working-directory: ${{ github.workspace }}/ParallelU
 
       - name: Build (Release)
