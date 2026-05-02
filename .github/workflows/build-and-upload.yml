@@ -40,18 +40,11 @@ jobs:
       - name: Setup XcodeGen
         run: |
           mkdir -p ~/tools
-          curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.45.0/XcodeGen-2.45.0-macOS-arm64.tar.gz | tar -xz -C ~/tools
-          ls -la ~/tools/
-          ls -la ~/tools/XcodeGen.app/Contents/MacOS/
+          curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.45.4/XcodeGen-2.45.4-macOS-arm64.tar.gz | tar -xz -C ~/tools
           echo "~/tools/XcodeGen.app/Contents/MacOS" >> $GITHUB_PATH
 
-      - name: Verify XcodeGen
-        run: xcodegen version
-
       - name: Generate Xcode project
-        run: |
-          xcodegen generate
-          ls -la ParallelU.xcodeproj
+        run: xcodegen generate
         working-directory: ${{ github.workspace }}/ParallelU
 
       - name: Build (Release)
