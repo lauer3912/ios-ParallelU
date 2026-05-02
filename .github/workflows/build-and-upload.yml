@@ -4,15 +4,6 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
-    inputs:
-      deploy_type:
-        description: 'Deploy type'
-        required: true
-        default: 'testflight'
-        type: choice
-        options:
-          - testflight
-          - appstore
 
 env:
   DEV_TEAM: 9L6N2ZF26B
@@ -44,10 +35,13 @@ jobs:
           # Import certificate from base64
           echo "$CERTIFICATE_BASE64" | base64 -d -o /tmp/certificate.p12
           security import /tmp/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k ~/build-keychain.keychain
-          security set-key-partition-list -S -k -t cert -s -i 1 ~/build-keychain.keychain
           
-          # Use this keychain for build
-          echo "CODE_SIGNING_KEYCHAIN=~/build-keychain.keychain" >> $GITHUB_ENV
+          # Fix partition list (required for code signing)
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" -t cert -s -i 1 ~/build-keychain.keychain
+          
+          # Set keychain as default for this session
+          security list-keychains -s ~/build-keychain.keychain
+          security default-keychain -s ~/build-keychain.keychain
         working-directory: ${{ github.workspace }}
 
       # -------- Ruby (for XcodeGen) --------
@@ -80,7 +74,8 @@ jobs:
             -destination 'generic/platform=iOS' \
             DEVELOPMENT_TEAM=${{ env.DEV_TEAM }} \
             CODE_SIGN_STYLE=Manual \
-            CODE_SIGNING_KEYCHAIN=${{ env.CODE_SIGNING_KEYCHAIN }} \
+            CODE_SIGN_ID="Apple Distribution: ZhiFeng Sun (9L6N2ZF26B)" \
+            CODE_SIGNING_KEYCHAIN=~/build-keychain.keychain \
             CODE_SIGNING_ALLOWED=YES \
             archive \
             -archivePath ./ParallelU.xcarchive
