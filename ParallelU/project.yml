@@ -1,0 +1,117 @@
+name: ParallelU
+options:
+  bundleIdPrefix: com.ggsheng
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+  groupSortPosition: top
+
+settings:
+  base:
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: "9L6N2ZF26B"
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.9"
+    ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+
+configs:
+  Debug:
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+  Release:
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+
+targets:
+  ParallelU:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+        excludes:
+          - "**/*.entitlements"
+    resources:
+      - path: Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ggsheng.ParallelU
+        INFOPLIST_FILE: Sources/App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/App/ParallelU.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_NAME: ParallelU
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_XR_DESIGNED: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+    entitlements:
+      path: Sources/App/ParallelU.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ggsheng.ParallelU
+    preBuildScripts: []
+    postBuildScripts: []
+
+  ParallelUWidgetExtension:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources/Widgets
+    resources:
+      - path: Resources/Assets.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ggsheng.ParallelU.widget
+        INFOPLIST_FILE: Sources/Widgets/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/Widgets/ParallelUWidget.entitlements
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_NAME: ParallelUWidgetExtension
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+    entitlements:
+      path: Sources/Widgets/ParallelUWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ggsheng.ParallelU
+
+  ParallelUTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources/Tests
+    dependencies:
+      - target: ParallelU
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ggsheng.ParallelUTests
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/ParallelU.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ParallelU"
+
+schemes:
+  ParallelU:
+    build:
+      targets:
+        ParallelU: all
+        ParallelUWidgetExtension: all
+        ParallelUTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ParallelUTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
