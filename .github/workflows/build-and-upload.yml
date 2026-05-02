@@ -25,8 +25,10 @@ jobs:
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          KEYCHAIN_PASSWORD="build-keychain-$(date +%s)"
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+          
           # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" ~/build-keychain.keychain
           security set-keychain-settings -t 3600 -u ~/build-keychain.keychain
@@ -36,8 +38,8 @@ jobs:
           echo "$CERTIFICATE_BASE64" | base64 -d -o /tmp/certificate.p12
           security import /tmp/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k ~/build-keychain.keychain
           
-          # Fix partition list (required for code signing)
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" -t cert -s -i 1 ~/build-keychain.keychain
+          # Set partition list (required for code signing) - correct syntax
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" ~/build-keychain.keychain
           
           # Set keychain as default for this session
           security list-keychains -s ~/build-keychain.keychain
