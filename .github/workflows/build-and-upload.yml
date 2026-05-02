@@ -29,6 +29,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # -------- Import Certificate --------
+      - name: Import Apple Certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" ~/build-keychain.keychain
+          security set-keychain-settings -t 3600 -u ~/build-keychain.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" ~/build-keychain.keychain
+          
+          # Import certificate from base64
+          echo "$CERTIFICATE_BASE64" | base64 -d -o /tmp/certificate.p12
+          security import /tmp/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k ~/build-keychain.keychain
+          security set-key-partition-list -S -k -t cert -s -i 1 ~/build-keychain.keychain
+          
+          # Use this keychain for build
+          echo "CODE_SIGNING_KEYCHAIN=~/build-keychain.keychain" >> $GITHUB_ENV
+        working-directory: ${{ github.workspace }}
+
       # -------- Ruby (for XcodeGen) --------
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -58,7 +79,8 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             DEVELOPMENT_TEAM=${{ env.DEV_TEAM }} \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGNING_KEYCHAIN=${{ env.CODE_SIGNING_KEYCHAIN }} \
             CODE_SIGNING_ALLOWED=YES \
             archive \
             -archivePath ./ParallelU.xcarchive
