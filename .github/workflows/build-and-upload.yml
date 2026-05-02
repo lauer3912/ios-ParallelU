@@ -16,61 +16,44 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      # -------- Checkout --------
       - name: Checkout
         uses: actions/checkout@v4
 
-      # -------- Import Certificate --------
       - name: Import Apple Certificate
         env:
           CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
           CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
         run: |
-          KEYCHAIN_PASSWORD="build-keychain-$(date +%s)"
+          KEYCHAIN_PASSWORD="buildkeychain$(date +%s)"
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
           
-          # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" ~/build-keychain.keychain
           security set-keychain-settings -t 3600 -u ~/build-keychain.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" ~/build-keychain.keychain
           
-          # Import certificate from base64
           echo "$CERTIFICATE_BASE64" | base64 -d -o /tmp/certificate.p12
           security import /tmp/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k ~/build-keychain.keychain
-          
-          # Set partition list (required for code signing)
           security set-key-partition-list -S apple-tool:,apple:,codesign: -k "$KEYCHAIN_PASSWORD" ~/build-keychain.keychain
-          
-          # Set keychain as default for this session
           security list-keychains -s ~/build-keychain.keychain
           security default-keychain -s ~/build-keychain.keychain
-        working-directory: ${{ github.workspace }}
 
-      # -------- XcodeGen --------
       - name: Setup XcodeGen
         run: |
           mkdir -p ~/tools
           curl -fsSL https://github.com/yonaskolb/XcodeGen/releases/download/2.45.0/XcodeGen-2.45.0-macOS-arm64.tar.gz | tar -xz -C ~/tools
           ls -la ~/tools/
           ls -la ~/tools/XcodeGen.app/Contents/MacOS/
-        working-directory: /tmp
+          echo "~/tools/XcodeGen.app/Contents/MacOS" >> $GITHUB_PATH
 
       - name: Verify XcodeGen
-        run: |
-          echo "Adding XcodeGen to PATH"
-          echo "$HOME/tools" >> $GITHUB_PATH
-          export PATH="$PATH:$HOME/tools"
-          xcodegen version
+        run: xcodegen version
 
-      # -------- Generate Project --------
       - name: Generate Xcode project
         run: |
-          export PATH="$PATH:$HOME/tools"
           xcodegen generate
-          ls -la
+          ls -la ParallelU.xcodeproj
         working-directory: ${{ github.workspace }}/ParallelU
 
-      # -------- Build --------
       - name: Build (Release)
         run: |
           xcodebuild -project ParallelU.xcodeproj \
@@ -86,12 +69,10 @@ jobs:
             -archivePath ./ParallelU.xcarchive
         working-directory: ${{ github.workspace }}/ParallelU
 
-      # -------- Upload --------
       - name: Upload to App Store Connect
         env:
           ASC_PASS: ${{ secrets.ASC_APP_PASSWORD }}
         run: |
-          echo "=== Uploading to App Store Connect ==="
           xcrun altool --upload-app \
             -f ./ParallelU.xcarchive \
             -t ${{ env.PLATFORM }} \
@@ -102,12 +83,8 @@ jobs:
             --apple-id 6762428992
         working-directory: ${{ github.workspace }}/ParallelU
 
-      # -------- Success notification --------
       - name: Build summary
         run: |
           echo "## ✅ Build & Upload Complete" >> $GITHUB_STEP_SUMMARY
           echo "- App: ParallelU" >> $GITHUB_STEP_SUMMARY
           echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Workflow: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Next step: Log in to App Store Connect to add TestFlight testers and submit for review." >> $GITHUB_STEP_SUMMARY
